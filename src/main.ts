@@ -1,10 +1,10 @@
-import { readFile } from 'fs/promises';
-import { join } from 'path';
-import { parse } from 'yaml';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { parse } from 'yaml';
 
 import { AppModule } from './app.module';
 import { DOC_FILENAME, DOC_PATH } from './utils/constants';

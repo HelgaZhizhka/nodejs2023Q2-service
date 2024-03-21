@@ -8,6 +8,8 @@ import { ArtistModule } from './artist/artist.module';
 import { AlbumModule } from './album/album.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { TrackModule } from './track/track.module';
+import { LoggingService } from './logging/logging.service';
+import { AuthModule } from './auth/auth.module';
 import config from './config/configuration';
 
 @Module({
@@ -21,8 +23,9 @@ import config from './config/configuration';
     AlbumModule,
     FavoriteModule,
     TrackModule,
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, LoggingService],
 })
 export class AppModule {}
