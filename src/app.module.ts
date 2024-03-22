@@ -10,6 +10,8 @@ import { FavoriteModule } from './favorite/favorite.module';
 import { TrackModule } from './track/track.module';
 import { LoggingService } from './logging/logging.service';
 import { AuthModule } from './auth/auth.module';
+import { IamModule } from './iam/iam.module';
+import { IamModule } from './iam/iam.module';
 import config from './config/configuration';
 
 @Module({
@@ -24,6 +26,7 @@ import config from './config/configuration';
     FavoriteModule,
     TrackModule,
     AuthModule,
+    IamModule,
   ],
   controllers: [AppController],
   providers: [AppService, LoggingService],

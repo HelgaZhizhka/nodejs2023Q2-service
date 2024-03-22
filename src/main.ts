@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -8,9 +8,14 @@ import { parse } from 'yaml';
 
 import { AppModule } from './app.module';
 import { DOC_FILENAME, DOC_PATH } from './utils/constants';
+import { LoggingService } from './logging/logging.service';
+import { LoggingMiddleware } from './logging/logging.middleware';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: new LoggingService(),
+  });
+  app.use(new LoggingMiddleware().use);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port');
   app.useGlobalPipes(new ValidationPipe());
@@ -18,7 +23,15 @@ async function bootstrap() {
     await readFile(join(__dirname, DOC_PATH, DOC_FILENAME), 'utf8'),
   );
   SwaggerModule.setup('doc', app, swaggerConfig);
+  const logger = app.get(LoggingService);
+  process.on('uncaughtException', (error) => {
+    logger.error(`Uncaught Exception: ${error.message}`, 'Bootstrap');
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    logger.error(`Unhandled Rejection: ${reason}`, 'Bootstrap');
+  });
   await app.listen(port);
-  Logger.log(`~ Application is running on port: ${port}`);
+  logger.warn(`~ Application is running on port: ${port}`, 'Bootstrap');
 }
 bootstrap();
