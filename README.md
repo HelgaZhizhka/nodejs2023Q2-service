@@ -62,6 +62,30 @@ To scan for vulnerabilities in the project dependencies:
 npm run scout
 ```
 
+## Docker build 
+
+To build the application and database images:
+
+```
+npm run docker:build
+```
+
+## Docker deploy
+
+To deploy the application and database images:
+
+```
+npm run docker:deploy
+```
+
+## Docker pull
+
+To pull the application and database images:
+
+```
+npm run docker:pull
+```
+
 ### Auto-fix and format
 
 ```
@@ -74,6 +98,6 @@ npm run format
 
 ## Docker Hub
 
-[Docker Hub Repository Application image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-api/latest/images/sha256-de83ce36bcd8b051f1fc0327912c22243105a80655a850dd61c4afcac82cc1b0?context=repo)
+[Docker Hub Repository Application image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-api/latest/images/sha256-12cc40a45207e39d60bb8a767de90151419055c5d2b11519649470f787d3c53b?context=repo)
 
-[Docker Hub Repository Database image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-db/latest/images/sha256-ab2aee137b0dad9c54fab53ad5ee3f143ccccb516f08405431b8de574b89410c?context=repo)
+[Docker Hub Repository Database image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-db/latest/images/sha256-c2af410a344bbc748f9bc23492af2d9288628a2c00d7e59329cfee5d482a61e3?context=repo)

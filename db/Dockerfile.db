@@ -1,4 +1,4 @@
-FROM postgres:15-alpine
+FROM --platform=$BUILDPLATFORM postgres:15-alpine
 
 RUN mkdir -p /var/log/postgresql && \
   chown postgres:postgres /var/log/postgresql

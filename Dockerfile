@@ -1,4 +1,4 @@
-FROM --platform=${BUILDPLATFORM} node:20.11.1 AS builder
+FROM --platform=$BUILDPLATFORM node:18 AS builder
 
 WORKDIR /usr/app
 
@@ -7,11 +7,15 @@ COPY . .
 RUN npm ci
 
 
-FROM --platform=${BUILDPLATFORM} node:20.11.1-alpine AS development
+FROM --platform=$BUILDPLATFORM node:18-alpine AS development
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN echo "Running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
 
 WORKDIR /usr/app
 
-COPY --from=builder /usr/app ./
+COPY --from=builder /usr/app /usr/app
 
 COPY ./docker-entrypoint.sh ./docker-entrypoint.sh
 
