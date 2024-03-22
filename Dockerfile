@@ -1,24 +1,22 @@
-FROM node:20.11.1-alpine AS builder
+FROM --platform=${BUILDPLATFORM} node:20.11.1 AS builder
 
 WORKDIR /usr/app
-
-COPY package*.json ./
-
-RUN apk add --no-cache --virtual .build-deps python3 make g++ \
-    && npm ci \
-    && apk del .build-deps
-
-
-FROM node:20.11.1-alpine AS development
-
-WORKDIR /usr/app
-
-COPY --from=builder /usr/app/node_modules ./node_modules
 
 COPY . .
 
+RUN npm ci
+
+
+FROM --platform=${BUILDPLATFORM} node:20.11.1-alpine AS development
+
+WORKDIR /usr/app
+
+COPY --from=builder /usr/app ./
+
+COPY ./docker-entrypoint.sh ./docker-entrypoint.sh
+
+RUN chmod +x ./docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/app/docker-entrypoint.sh"]
+
 EXPOSE $APP_PORT
-
-RUN npm run prisma:generate
-
-CMD ["npm", "run", "start:migrate:dev"]

@@ -74,6 +74,6 @@ npm run format
 
 ## Docker Hub
 
-[Docker Hub Repository Application image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-api/latest/images/sha256-b9a93e4986c15fa968bf7e88bd772f503ecbfddc6a88891c78be8ab508e8e733?context=repo)
+[Docker Hub Repository Application image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-api/latest/images/sha256-de83ce36bcd8b051f1fc0327912c22243105a80655a850dd61c4afcac82cc1b0?context=repo)
 
-[Docker Hub Repository Database image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-db/latest/images/sha256-a3e4b3ed890986890a16f0deb3a6a1893613e9a13a32121fd1f2eb8b59cc1488?context=repo)
+[Docker Hub Repository Database image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-db/latest/images/sha256-ab2aee137b0dad9c54fab53ad5ee3f143ccccb516f08405431b8de574b89410c?context=repo)
