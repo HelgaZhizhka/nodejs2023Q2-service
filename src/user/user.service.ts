@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { compare, hash } from 'bcrypt';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -11,8 +12,9 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const { login, password } = createUserDto;
+    const hashedPassword = await hash(password, 10);
     const user = await this.prisma.user.create({
-      data: { login, password, version: 1 },
+      data: { login, password: hashedPassword, version: 1 },
     });
     return new UserResponseDto(user);
   }
@@ -46,14 +48,17 @@ export class UserService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    if (user.password !== oldPassword) {
+    const isMatch = await compare(oldPassword, user.password);
+    if (!isMatch) {
       throw new HttpException('Invalid password', HttpStatus.FORBIDDEN);
     }
+
+    const hashedNewPassword = await hash(newPassword, 10);
 
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
-        password: newPassword,
+        password: hashedNewPassword,
         version: { increment: 1 },
       },
     });
