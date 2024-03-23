@@ -10,8 +10,7 @@ import { UserResponseDto } from './dto/user-response.dto';
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
-    const { login, password } = createUserDto;
+  async create({ login, password }: CreateUserDto): Promise<UserResponseDto> {
     const hashedPassword = await hash(password, 10);
     const user = await this.prisma.user.create({
       data: { login, password: hashedPassword, version: 1 },
@@ -39,9 +38,8 @@ export class UserService {
 
   async update(
     id: string,
-    updateUserDto: UpdateUserDto,
+    { oldPassword, newPassword }: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    const { oldPassword, newPassword } = updateUserDto;
     const user = await this.prisma.user.findUnique({ where: { id } });
 
     if (!user) {
