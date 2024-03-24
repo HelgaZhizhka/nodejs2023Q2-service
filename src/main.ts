@@ -6,10 +6,11 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parse } from 'yaml';
 
-import { AppModule } from './app.module';
 import { DOC_FILENAME, DOC_PATH } from './utils/constants';
+import { PrismaExceptionFilter } from './utils/prismaExceptionFilter';
 import { LoggingService } from './logging/logging.service';
 import { LoggingMiddleware } from './logging/logging.middleware';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -24,6 +25,7 @@ async function bootstrap() {
   );
   SwaggerModule.setup('doc', app, swaggerConfig);
   const logger = app.get(LoggingService);
+   app.useGlobalFilters(new PrismaExceptionFilter());
   process.on('uncaughtException', (error) => {
     logger.error(`Uncaught Exception: ${error.message}`, 'Bootstrap');
   });

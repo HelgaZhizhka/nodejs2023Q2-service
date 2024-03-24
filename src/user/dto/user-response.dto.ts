@@ -15,3 +15,4 @@ export class UserResponseDto {
     this.updatedAt = updatedAt.getTime();
   }
 }
+

@@ -6,3 +6,7 @@ export interface User {
   createdAt: number;
   updatedAt: number;
 }
+
+export interface RequestWithUser extends Request {
+  user: User;
+}

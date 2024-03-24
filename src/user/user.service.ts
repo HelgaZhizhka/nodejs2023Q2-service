@@ -11,7 +11,8 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async create({ login, password }: CreateUserDto): Promise<UserResponseDto> {
-    const hashedPassword = await hash(password, 10);
+    const saltRounds = +process.env.CRYPT_SALT || 10;
+    const hashedPassword = await hash(password, saltRounds);
     const user = await this.prisma.user.create({
       data: { login, password: hashedPassword, version: 1 },
     });
@@ -51,7 +52,9 @@ export class UserService {
       throw new HttpException('Invalid password', HttpStatus.FORBIDDEN);
     }
 
-    const hashedNewPassword = await hash(newPassword, 10);
+    const saltRounds = +process.env.CRYPT_SALT || 10;
+
+    const hashedNewPassword = await hash(newPassword, saltRounds);
 
     const updatedUser = await this.prisma.user.update({
       where: { id },
