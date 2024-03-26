@@ -6,11 +6,16 @@
 
 ## Downloading
 
-clone the repository form branch sprint_2
+clone the repository
 
 ```
 git clone https://github.com/HelgaZhizhka/nodejs2024Q1-service.git
 cd nodejs2024Q1-service
+```
+Checkout on branch sprint_2
+
+```
+git checkout sprint_2
 ```
 
 ## Installing NPM modules
@@ -51,22 +56,10 @@ To run all tests without authorization. Run tests with starting the database and
 npm run test
 ```
 
-To run only one of all test suites
+or
 
 ```
-npm run test -- -t 'suite name'
-```
-
-To run all test with authorization. Run tests with starting the database and application:
-
-```
-npm run test:auth
-```
-
-To run only specific test suite with authorization
-
-```
-npm run test:auth -- -t 'suite name'
+npm run docker:test
 ```
 
 ## Scanning for Vulnerabilities
@@ -75,30 +68,6 @@ To scan for vulnerabilities in the project dependencies:
 
 ```
 npm run scout
-```
-
-## Docker build
-
-To build the application and database images:
-
-```
-npm run docker:build
-```
-
-## Docker deploy
-
-To deploy the application and database images:
-
-```
-npm run docker:deploy
-```
-
-## Docker pull
-
-To pull the application and database images:
-
-```
-npm run docker:pull
 ```
 
 ### Auto-fix and format
@@ -111,13 +80,8 @@ npm run lint
 npm run format
 ```
 
-Debugging in VSCode
-
-To debug the application in VSCode, you can use the provided launch configuration. Open the Debug panel in VSCode and select the "Debug Application" configuration.
-Press F5 to start the application in debug mode.
-
 ## Docker Hub
 
-[Docker Hub Repository Application image]()
+[Docker Hub Repository Application image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-api/latest/images/sha256-57587e59a2044b44f27df40e7c115cf3ea0fd2c9ab476a1f04e55b5064b44011?context=repo)
 
-[Docker Hub Repository Database image]()
+[Docker Hub Repository Database image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-db/latest/images/sha256-9c524987d480f9c11d5bea2bec1d947dfa471045ed3d60ca053c0ed2adac46d2?context=repo)

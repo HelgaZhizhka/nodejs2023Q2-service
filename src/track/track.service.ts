@@ -10,28 +10,6 @@ export class TrackService {
   constructor(private prisma: PrismaService) {}
 
   async create(createTrackDto: CreateTrackDto): Promise<Track> {
-    const { albumId, artistId } = createTrackDto;
-
-    if (artistId) {
-      const artist = await this.prisma.artist.findUnique({
-        where: { id: artistId },
-      });
-
-      if (!artist) {
-        throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
-      }
-    }
-
-    if (albumId) {
-      const album = await this.prisma.album.findUnique({
-        where: { id: albumId },
-      });
-
-      if (!album) {
-        throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
-      }
-    }
-
     return await this.prisma.track.create({ data: createTrackDto });
   }
 
@@ -73,7 +51,7 @@ export class TrackService {
     });
 
     for (const favorite of favoritesContainingTrack) {
-      const updatedTracks = favorite.artists.filter((id) => id !== trackId);
+      const updatedTracks = favorite.tracks.filter((id) => id !== trackId);
       await this.prisma.favorite.update({
         where: { favoriteId: favorite.favoriteId },
         data: { tracks: updatedTracks },

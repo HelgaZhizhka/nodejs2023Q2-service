@@ -1,23 +1,21 @@
-FROM --platform=$BUILDPLATFORM node:18 AS builder
+FROM node:20.11.1 AS builder 
 
 WORKDIR /usr/app
+
+COPY package*.json ./
+
+RUN npm ci && npm cache clean --force
 
 COPY . .
 
-RUN npm ci
+RUN npx prisma generate
 
 
-FROM --platform=$BUILDPLATFORM node:18-alpine AS development
-
-ARG TARGETPLATFORM
-ARG BUILDPLATFORM
-RUN echo "Running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
+FROM node:20.11.1-alpine AS development
 
 WORKDIR /usr/app
 
-COPY --from=builder /usr/app /usr/app
-
-COPY ./docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --from=builder /usr/app /usr/app/
 
 RUN chmod +x ./docker-entrypoint.sh
 

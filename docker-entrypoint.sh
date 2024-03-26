@@ -1,5 +1,3 @@
 #!/bin/sh
 
-npx prisma migrate deploy
-
-npm run start:dev
+npx prisma migrate deploy && npm run start:dev

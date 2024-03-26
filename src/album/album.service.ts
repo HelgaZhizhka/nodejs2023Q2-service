@@ -10,18 +10,6 @@ export class AlbumService {
   constructor(private prisma: PrismaService) {}
 
   async create(createAlbumDto: CreateAlbumDto): Promise<Album> {
-    const { artistId } = createAlbumDto;
-
-    if (artistId) {
-      const artist = await this.prisma.artist.findUnique({
-        where: { id: artistId },
-      });
-
-      if (!artist) {
-        throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
-      }
-    }
-
     return await this.prisma.album.create({ data: createAlbumDto });
   }
 
