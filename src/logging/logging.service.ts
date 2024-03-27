@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { LoggerService } from '@nestjs/common';
+// import { LoggerService } from '@nestjs/common';
 
 @Injectable()
-export class LoggingService implements LoggerService {
+export class LoggingService {
   log(message: string, context?: string): void {
     const prefix = context ? `[${context}]` : '';
     console.log(`${prefix} ${message}`);

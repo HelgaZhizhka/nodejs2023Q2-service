@@ -19,13 +19,19 @@ async function bootstrap() {
   app.use(new LoggingMiddleware().use);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port');
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidUnknownValues: true,
+    }),
+  );
   const swaggerConfig = parse(
     await readFile(join(__dirname, DOC_PATH, DOC_FILENAME), 'utf8'),
   );
   SwaggerModule.setup('doc', app, swaggerConfig);
   const logger = app.get(LoggingService);
-   app.useGlobalFilters(new PrismaExceptionFilter());
+  app.useGlobalFilters(new PrismaExceptionFilter());
   process.on('uncaughtException', (error) => {
     logger.error(`Uncaught Exception: ${error.message}`, 'Bootstrap');
   });

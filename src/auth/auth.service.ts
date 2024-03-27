@@ -1,8 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { compare } from 'bcrypt';
+import { User } from '@prisma/client';
 
-import { RequestWithUser } from '../user/interface/user.interface';
 import { UserResponseDto } from '../user/dto/user-response.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserService } from '../user/user.service';
@@ -18,9 +17,8 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async login(req: RequestWithUser): Promise<Tokens> {
-    const tokens = await this.getTokens(req.user.id, req.user.login);
-    return { ...tokens };
+  async login(user: User): Promise<Tokens> {
+    return await this.signTokens(user.id, user.login);
   }
 
   async signup(createAuthDto: CreateAuthDto): Promise<UserResponseDto> {
@@ -34,39 +32,50 @@ export class AuthService {
       return null;
     }
 
-    const isMatch = await compare(password, currentUser.password);
+    const isMatch = await this.userService.comparePassword(
+      password,
+      currentUser.password,
+    );
 
     if (!isMatch) {
       return null;
     }
 
-    const payload = { userId: currentUser.id, login: currentUser.login };
-    return this.jwtService.sign(payload);
+    return currentUser;
   }
 
   async refresh({ refreshToken }: UpdateAuthDto): Promise<Tokens> {
-    const payload = this.jwtService.verify(refreshToken, {
+    const payload = await this.jwtService.verify(refreshToken, {
       secret: process.env.JWT_SECRET_REFRESH_KEY,
     });
 
-    return await this.getTokens(payload.userId, payload.login);
+    if (!payload) {
+      throw new HttpException(
+        'Refresh token is invalid or expired',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const { login, userId } = payload;
+    return await this.signTokens(userId, login);
   }
 
-  private async getTokens(userId: string, login: string): Promise<Tokens> {
+  private async signTokens(userId: string, login: string): Promise<Tokens> {
     const payload = { sub: userId, login };
-    const access_token = this.jwtService.sign(payload, {
+    console.log(payload);
+    const accessToken = await this.jwtService.signAsync(payload, {
       secret: process.env.JWT_SECRET_KEY,
       expiresIn: process.env.TOKEN_EXPIRE_TIME,
     });
 
-    const refresh_token = this.jwtService.sign(payload, {
+    const refreshToken = await this.jwtService.signAsync(payload, {
       secret: process.env.JWT_SECRET_REFRESH_KEY,
       expiresIn: process.env.TOKEN_REFRESH_EXPIRE_TIME,
     });
 
     return {
-      access_token,
-      refresh_token,
+      accessToken,
+      refreshToken,
     };
   }
 }

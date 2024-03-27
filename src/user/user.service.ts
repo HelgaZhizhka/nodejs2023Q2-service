@@ -11,8 +11,7 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async create({ login, password }: CreateUserDto): Promise<UserResponseDto> {
-    const saltRounds = +process.env.CRYPT_SALT || 10;
-    const hashedPassword = await hash(password, saltRounds);
+    const hashedPassword = await this.hashPassword(password);
     const user = await this.prisma.user.create({
       data: { login, password: hashedPassword, version: 1 },
     });
@@ -47,15 +46,12 @@ export class UserService {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    const isMatch = await compare(oldPassword, user.password);
+    const isMatch = await this.comparePassword(oldPassword, user.password);
     if (!isMatch) {
       throw new HttpException('Invalid password', HttpStatus.FORBIDDEN);
     }
 
-    const saltRounds = +process.env.CRYPT_SALT || 10;
-
-    const hashedNewPassword = await hash(newPassword, saltRounds);
-
+    const hashedNewPassword = await this.hashPassword(newPassword);
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
@@ -70,5 +66,14 @@ export class UserService {
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.prisma.user.delete({ where: { id } });
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    const saltRounds = +process.env.CRYPT_SALT || 10;
+    return await hash(password, saltRounds);
+  }
+
+  async comparePassword(password: string, hash: string): Promise<boolean> {
+    return await compare(password, hash);
   }
 }

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -9,6 +10,7 @@ import { AlbumModule } from './album/album.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { TrackModule } from './track/track.module';
 import { LoggingService } from './logging/logging.service';
+import { JwtAccessTokenGuard } from './auth/guards';
 import { AuthModule } from './auth/auth.module';
 import config from './config/configuration';
 
@@ -26,6 +28,13 @@ import config from './config/configuration';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService, LoggingService],
+  providers: [
+    AppService,
+    LoggingService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAccessTokenGuard,
+    },
+  ],
 })
 export class AppModule {}

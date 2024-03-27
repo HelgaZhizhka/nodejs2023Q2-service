@@ -8,17 +8,14 @@ import {
   Delete,
   HttpCode,
   ParseUUIDPipe,
-  UseGuards,
 } from '@nestjs/common';
 import { StatusCodes } from 'http-status-codes';
 import { Artist } from '@prisma/client';
 
-import { JwtAuthGuard } from '../auth/guards';
 import { ArtistService } from './artist.service';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 
-@UseGuards(JwtAuthGuard)
 @Controller('artist')
 export class ArtistController {
   constructor(private readonly artistService: ArtistService) {}
