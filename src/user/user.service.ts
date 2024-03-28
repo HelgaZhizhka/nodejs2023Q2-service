@@ -5,10 +5,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   async create({ login, password }: CreateUserDto): Promise<UserResponseDto> {
     const hashedPassword = await this.hashPassword(password);
@@ -69,8 +73,9 @@ export class UserService {
   }
 
   async hashPassword(password: string): Promise<string> {
-    const saltRounds = +process.env.CRYPT_SALT || 10;
-    return await hash(password, saltRounds);
+    const cryptConfig = this.configService.get('crypt');
+    const salt = cryptConfig.salt;
+    return await hash(password, salt);
   }
 
   async comparePassword(password: string, hash: string): Promise<boolean> {

@@ -1,21 +1,27 @@
 import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
+import { IS_PUBLIC_KEY } from '../decorators/is-public-path.decorator';
 
 @Injectable()
 class JwtAccessTokenGuard extends AuthGuard('jwt') {
-  constructor() {
+  constructor(private reflector: Reflector) {
     super();
   }
 
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const publicRoutes: string[] = ['/auth/signup', '/auth/login', '/doc', '/'];
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    
+    console.log('inner guard', isPublic)
 
-    if (publicRoutes.includes(request.path)) {
+    if (isPublic) {
       return true;
     }
 

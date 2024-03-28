@@ -1,24 +1,27 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-// import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
-// import { JWT_SETTINGS } from '../utils/constants';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UserModule } from '../user/user.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { JwtStrategy, LocalStrategy } from './strategies';
+import { RefreshStrategy, JwtStrategy, LocalStrategy } from './strategies';
 
 @Module({
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy],
   controllers: [AuthController],
   imports: [
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule,
     JwtModule.registerAsync({
-      useFactory: async () => ({
-        secret: process.env.JWT_SECRET_KEY,
-        signOptions: { expiresIn: process.env.TOKEN_EXPIRE_TIME },
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt.secretKey'),
+        signOptions: {
+          expiresIn: configService.get<string>('jwt.tokenExpireTime'),
+        },
       }),
     }),
     PrismaModule,
