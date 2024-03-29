@@ -16,7 +16,7 @@ import {
   JwtRefreshTokenGuard,
   LocalGuard,
 } from './guards';
-import { Public } from './decorators/is-public-path.decorator';
+import { Public } from '../decorators/is-public-path.decorator';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { RefreshResponse } from './interfaces/refresh.interface';
 import { AuthService } from './auth.service';

@@ -7,10 +7,10 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-import { LoggingService } from '../logging/logging.service';
+import { LoggingService } from '../../logging/logging.service';
 
 @Catch()
-export class HttpExceptionFilter implements ExceptionFilter {
+class HttpExceptionFilter implements ExceptionFilter {
   constructor(private loggingService: LoggingService) {}
 
   catch(exception: HttpException, host: ArgumentsHost) {
@@ -30,13 +30,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     const result = {
       statusCode: status,
-      message,
+      message: typeof message === 'object' ? JSON.stringify(message) : message,
       timestamp: new Date().toISOString(),
       path: request.url,
     };
 
-    this.loggingService.error(result);
+    this.loggingService.logError(`HTTP Exception: ${JSON.stringify(result)}`);
 
     response.status(status).json(result);
   }
 }
+
+export default HttpExceptionFilter;

@@ -1,7 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
-import * as fs from 'fs';
-import * as path from 'path';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+} from 'node:fs';
+import { parse, resolve } from 'node:path';
+import { EOL } from 'node:os';
 
 import { LOG_PATH } from '../utils/constants';
 
@@ -11,7 +18,9 @@ export class LoggingService extends Logger {
 
   logRequest(req: Request) {
     const { method, body, params, originalUrl } = req;
-    const logMessage = `${method} ${originalUrl} - Body: ${JSON.stringify(body)} - Params: ${JSON.stringify(params)}`;
+    const logMessage = `${method} ${originalUrl} - Body: ${JSON.stringify(
+      body,
+    )} - Params: ${JSON.stringify(params)}`;
     this.logger.log(logMessage);
   }
 
@@ -21,8 +30,13 @@ export class LoggingService extends Logger {
     this.logger.verbose(logMessage);
   }
 
-  logError(error: Error, stack: string) {
-    const logMessage = `${error.message} - Stack: ${stack}`;
-    this.logger.error(logMessage);
+  logError(message: string | Error, stack?: string) {
+    const logMessage = typeof message === 'string' ? message : message.message;
+    const logStack =
+      stack || (message instanceof Error ? message.stack : undefined);
+    const fullMessage = logStack
+      ? `${logMessage} - Stack: ${logStack}`
+      : logMessage;
+    this.logger.error(fullMessage);
   }
 }

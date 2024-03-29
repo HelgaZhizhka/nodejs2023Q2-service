@@ -3,7 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
-import { IS_PUBLIC_KEY } from '../decorators/is-public-path.decorator';
+import { IS_PUBLIC_KEY } from '../../decorators/is-public-path.decorator';
 
 @Injectable()
 class JwtAccessTokenGuard extends AuthGuard('jwt') {
@@ -18,7 +18,7 @@ class JwtAccessTokenGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
-    
+
     if (isPublic) {
       return true;
     }
