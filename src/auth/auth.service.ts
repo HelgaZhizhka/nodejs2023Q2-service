@@ -8,7 +8,6 @@ import { User, UserTokens } from '../user/interfaces/user.interface';
 import { UserService } from '../user/user.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RefreshResponse } from './interfaces/refresh.interface';
-import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 
 @Injectable()
@@ -31,7 +30,7 @@ export class AuthService {
     return await this.userService.create(createUserDto);
   }
 
-  async validateUser({ login, password }: CreateAuthDto) {
+  async validateUser({ login, password }: CreateUserDto) {
     const currentUser = await this.prisma.user.findUnique({ where: { login } });
 
     if (!currentUser) {
@@ -69,7 +68,10 @@ export class AuthService {
     return tokens;
   }
 
-  private async signTokens(userId: string, login: string): Promise<RefreshResponse> {
+  private async signTokens(
+    userId: string,
+    login: string,
+  ): Promise<RefreshResponse> {
     const payload = { userId, login };
 
     const accessToken = await this.jwtService.signAsync(payload, {

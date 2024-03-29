@@ -7,14 +7,16 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 
 import { DOC_FILENAME, DOC_PATH } from './utils/constants';
-// import { PrismaExceptionFilter } from './utils/prismaExceptionFilter';
-// import { LoggingService } from './logging/logging.service';
+import { PrismaExceptionFilter } from './utils/prismaExceptionFilter';
+import { LoggingService } from './logging/logging.service';
 import { LoggingMiddleware } from './logging/logging.middleware';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.use(new LoggingMiddleware().use);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const logger = new LoggingService();
+  // app.use(new LoggingMiddleware().use);
+//  const logger = app.get(Logger);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port');
   app.useGlobalPipes(
@@ -28,16 +30,17 @@ async function bootstrap() {
     await readFile(join(__dirname, DOC_PATH, DOC_FILENAME), 'utf8'),
   );
   SwaggerModule.setup('doc', app, swaggerConfig);
-  // const logger = app.get(LoggingService);
-  // app.useGlobalFilters(new PrismaExceptionFilter());
-  // process.on('uncaughtException', (error) => {
-  //   logger.error(`Uncaught Exception: ${error.message}`, 'Bootstrap');
+  app.useGlobalFilters(new PrismaExceptionFilter());
+
+  // process.on('uncaughtException', (err, origin) => {
+  //   logger.error(`Uncaught Exception: ${err.message}`, err.stack);
   // });
 
-  // process.on('unhandledRejection', (reason) => {
-  //   logger.error(`Unhandled Rejection: ${reason}`, 'Bootstrap');
+  // process.on('unhandledRejection', (reason, promise) => {
+  //   logger.warn(`Unhandled Rejection: ${reason}`);
   // });
+
   await app.listen(port);
-  Logger.log(`~ Application is running on port: ${port}`, 'Bootstrap');
+  logger.log(`~ Application is running on port: ${port}`, 'Bootstrap');
 }
 bootstrap();

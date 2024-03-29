@@ -1,34 +1,28 @@
-import { Injectable } from '@nestjs/common';
-// import { LoggerService } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { Request, Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { LOG_PATH } from '../utils/constants';
 
 @Injectable()
-export class LoggingService {
-  log(message: string, context?: string): void {
-    const prefix = context ? `[${context}]` : '';
-    console.log(`${prefix} ${message}`);
+export class LoggingService extends Logger {
+  private readonly logger = new Logger(LoggingService.name);
+
+  logRequest(req: Request) {
+    const { method, body, params, originalUrl } = req;
+    const logMessage = `${method} ${originalUrl} - Body: ${JSON.stringify(body)} - Params: ${JSON.stringify(params)}`;
+    this.logger.log(logMessage);
   }
 
-  error(message: string, context?: string, trace?: string, ): void {
-    // Тут твоя логика логирования ошибок
-    const prefix = context ? `[${context}]` : '';
-    console.error(`${prefix} ${message} Trace: ${trace}`);
+  logResponse(res: Response) {
+    const { statusCode, statusMessage } = res;
+    const logMessage = `Response: ${statusCode} ${statusMessage}`;
+    this.logger.verbose(logMessage);
   }
 
-  warn(message: string, context?: string): void {
-    // Тут твоя логика логирования предупреждений
-    const prefix = context ? `[${context}]` : '';
-    console.warn(`${prefix} ${message}`);
-  }
-
-  debug?(message: string, context?: string): void {
-    // Тут твоя логика логирования отладочной информации
-    const prefix = context ? `[${context}]` : '';
-    console.debug(`${prefix} ${message}`);
-  }
-
-  verbose?(message: string, context?: string): void {
-    // Тут твоя логика для подробного логирования
-    const prefix = context ? `[${context}]` : '';
-    console.log(`[Verbose] ${prefix} ${message}`);
+  logError(error: Error, stack: string) {
+    const logMessage = `${error.message} - Stack: ${stack}`;
+    this.logger.error(logMessage);
   }
 }
