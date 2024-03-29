@@ -61,9 +61,7 @@ model Favorite {
 model UserTokens {
   id           String   @id @default(uuid())
   userId       String   @unique
-  login        String   @unique
   refreshToken String   @unique
-  accessToken  String   @unique
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,14 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-// import { User } from '@prisma/client';
 
 import { UserResponseDto } from '../user/dto/user-response.dto';
-import { PrismaService } from '../prisma/prisma.service';
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import { User, UserTokens } from '../user/interfaces/user.interface';
 import { UserService } from '../user/user.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { RefreshResponse } from './interfaces/refresh.interface';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-import { User, UserTokens } from './interfaces/UserTokens';
 
 @Injectable()
 export class AuthService {
@@ -22,11 +23,12 @@ export class AuthService {
   async login(user: User): Promise<UserTokens> {
     const { id: userId, login } = user;
     const tokens = await this.signTokens(userId, login);
+    await this.saveUserTokens(userId, tokens.refreshToken);
     return { userId, login, ...tokens };
   }
 
-  async signup(createAuthDto: CreateAuthDto): Promise<UserResponseDto> {
-    return await this.userService.create(createAuthDto);
+  async signup(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    return await this.userService.create(createUserDto);
   }
 
   async validateUser({ login, password }: CreateAuthDto) {
@@ -48,17 +50,28 @@ export class AuthService {
     return currentUser;
   }
 
-  async refresh({ refreshToken }: UpdateAuthDto): Promise<UserTokens> {
-    const payload = await this.jwtService.verify(refreshToken, {
-      secret: this.configService.get<string>('jwt.refreshSecretKey'),
+  async refresh({ refreshToken }: UpdateAuthDto): Promise<RefreshResponse> {
+    const { userId } = await this.prisma.userTokens.findUnique({
+      where: {
+        refreshToken,
+      },
     });
-    const { login, userId } = payload;
+
+    if (!userId) {
+      throw new ForbiddenException('Invalid refresh token');
+    }
+
+    await this.removeUserTokens(userId);
+    const user = await this.userService.findOne(userId);
+    const { login } = user;
     const tokens = await this.signTokens(userId, login);
-    return { userId, login, ...tokens };
+    await this.saveUserTokens(userId, refreshToken);
+    return tokens;
   }
 
-  private async signTokens(userId: string, login: string) {
+  private async signTokens(userId: string, login: string): Promise<RefreshResponse> {
     const payload = { userId, login };
+
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>('jwt.secretKey'),
       expiresIn: this.configService.get<string>('jwt.tokenExpireTime'),
@@ -73,5 +86,39 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  private async saveUserTokens(userId: string, refreshToken: string) {
+    const token = await this.prisma.userTokens.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (token) {
+      await this.prisma.userTokens.update({
+        where: {
+          userId,
+        },
+        data: {
+          refreshToken,
+        },
+      });
+    } else {
+      await this.prisma.userTokens.create({
+        data: {
+          userId,
+          refreshToken,
+        },
+      });
+    }
+  }
+
+  private async removeUserTokens(userId: string) {
+    await this.prisma.userTokens.delete({
+      where: {
+        userId,
+      },
+    });
   }
 }
