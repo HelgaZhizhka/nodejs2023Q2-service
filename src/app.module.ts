@@ -33,11 +33,10 @@ import { AppService } from './app.service';
   controllers: [AppController],
   providers: [
     AppService,
-    LoggingService,
     {
       provide: APP_GUARD,
       useClass: JwtAccessTokenGuard,
-    },
+    }
   ],
 })
 export class AppModule implements NestModule {

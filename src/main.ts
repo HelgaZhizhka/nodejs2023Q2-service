@@ -13,10 +13,14 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  // const logger = new LoggingService();
   const logger = app.get(LoggingService);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port');
+  const swaggerConfig = parse(
+    await readFile(join(__dirname, DOC_PATH, DOC_FILENAME), 'utf8'),
+  );
+  SwaggerModule.setup('doc', app, swaggerConfig);
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -24,24 +28,25 @@ async function bootstrap() {
       forbidUnknownValues: true,
     }),
   );
-  const swaggerConfig = parse(
-    await readFile(join(__dirname, DOC_PATH, DOC_FILENAME), 'utf8'),
-  );
-  SwaggerModule.setup('doc', app, swaggerConfig);
-
+  
   app.useGlobalFilters(
     new PrismaExceptionFilter(),
     new HttpExceptionFilter(logger),
   );
 
   process.on('uncaughtException', (err, origin) => {
-    logger.error(`Uncaught Exception: ${err.message}`, err.stack);
+    logger.error(`Uncaught Exception: ${err.message}`, origin);
   });
 
   process.on('unhandledRejection', (reason, promise) => {
     logger.warn(`Unhandled Rejection: ${reason}`);
   });
 
+  // test for trigger the unhandledRejection handler error with logger service
+  // new Promise((resolve, reject) => {
+  //   throw new Error('This will be unhandled');
+  // });
+  
   await app.listen(port);
   logger.log(`~ Application is running on port: ${port}`, 'Bootstrap');
 }

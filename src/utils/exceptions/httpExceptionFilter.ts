@@ -8,6 +8,7 @@ import {
 import { Request, Response } from 'express';
 
 import { LoggingService } from '../../logging/logging.service';
+import { Utils } from '../entities/Utils';
 
 @Catch()
 class HttpExceptionFilter implements ExceptionFilter {
@@ -30,12 +31,17 @@ class HttpExceptionFilter implements ExceptionFilter {
 
     const result = {
       statusCode: status,
-      message: typeof message === 'object' ? JSON.stringify(message) : message,
-      timestamp: new Date().toISOString(),
+      message:
+        typeof message === 'object'
+          ? JSON.stringify(message, null, 2)
+          : message,
+      timestamp: Utils.getFormattedTimestamp(),
       path: request.url,
     };
 
-    this.loggingService.logError(`HTTP Exception: ${JSON.stringify(result)}`);
+    this.loggingService.logError(result);
+
+    response.setHeader('Type-Logging', 'error');
 
     response.status(status).json(result);
   }

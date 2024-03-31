@@ -29,7 +29,7 @@ class JwtRefreshTokenGuard extends AuthGuard('jwt-refresh') {
       await this.jwtService.verify(token, {
         secret: this.configService.get<string>('jwt.refreshSecretKey'),
       });
-    } catch (e) {
+    } catch {
       throw new ForbiddenException('Refresh token expired');
     }
 

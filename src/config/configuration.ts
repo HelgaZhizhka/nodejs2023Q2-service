@@ -15,9 +15,8 @@ export default () => ({
   crypt: {
     salt: +process.env.CRYPT_SALT || 10,
   },
-  logging: {
-    levels: process.env.LOGGING_LEVELS,
-    maxFileSize: process.env.LOGGING_MAX_FILE_SIZE,
-    nameLevels: ['debug', 'error', 'log', 'verbose', 'warn'],
+  log: {
+    maxFileSize: +process.env.LOG_MAX_FILE_SIZE * 1024,
+    logLevel: process.env.LOG_LEVEL || 4,
   },
 });

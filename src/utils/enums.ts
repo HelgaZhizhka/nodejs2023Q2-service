@@ -11,3 +11,11 @@ export const EntityToTable = {
   [Entities.ARTISTS]: 'artist',
   [Entities.ALBUMS]: 'album',
 };
+
+export const enum LogLevel {
+  ERROR,
+  WARN,
+  LOG,
+  DEBUG,
+  VERBOSE,  
+}
