@@ -1,7 +1,6 @@
 version: '3.8'
 services:
   api:
-    platform: linux/amd64
     container_name: api
     restart: unless-stopped
     image: helgazhyzhka/homelibrary-api:1.0.0-alpha.1
@@ -26,7 +25,6 @@ services:
     networks:
       - homelibrary
   db:
-    platform: linux/amd64
     container_name: db
     restart: unless-stopped
     image: helgazhyzhka/homelibrary-db:1.0.0-alpha.1
