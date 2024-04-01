@@ -29,7 +29,6 @@ class JwtRefreshTokenGuard implements CanActivate {
         secret: this.configService.get<string>('jwt.refreshSecretKey'),
       });
       request.user = decoded;
-      console.log(request.user);
     } catch (error) {
       throw new ForbiddenException('Refresh token expired');
     }

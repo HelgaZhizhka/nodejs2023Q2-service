@@ -29,7 +29,6 @@ export class AuthController {
   @Post('login')
   @HttpCode(StatusCodes.OK)
   async login(@Request() req): Promise<LoginResponse> {
-    console.log('REQUESSSSSTTT' , req.user);
     return await this.authService.login(req.user);
   }
 
