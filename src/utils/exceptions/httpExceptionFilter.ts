@@ -31,15 +31,14 @@ class HttpExceptionFilter implements ExceptionFilter {
 
     const result = {
       statusCode: status,
-      message:
-        typeof message === 'object'
-          ? JSON.stringify(message, null, 2)
-          : message,
+      message: typeof message === 'object' ? message : message,
       timestamp: Utils.getFormattedTimestamp(),
       path: request.url,
     };
 
-    this.loggingService.logError(result);
+    this.loggingService.logError(
+      `HTTP Exception: ${JSON.stringify(result, null, 2)}`,
+    );
 
     response.setHeader('Type-Logging', 'error');
 

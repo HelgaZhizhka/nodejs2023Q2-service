@@ -6,14 +6,3 @@ export interface User {
   createdAt: number;
   updatedAt: number;
 }
-
-export interface UserTokens {
-  userId: string;
-  login: string;
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface RequestWithUser extends Request {
-  user: User;
-}

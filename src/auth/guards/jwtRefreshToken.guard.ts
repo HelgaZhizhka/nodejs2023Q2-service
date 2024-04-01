@@ -1,39 +1,41 @@
 import {
-  ExecutionContext,
-  ForbiddenException,
   Injectable,
+  CanActivate,
+  ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-class JwtRefreshTokenGuard extends AuthGuard('jwt-refresh') {
+class JwtRefreshTokenGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {
-    super();
-  }
-  
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const token = request.body.refreshToken;
+  ) {}
 
-    if (!token) {
-      throw new UnauthorizedException('No refresh token provided');
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const refreshToken =
+      request.body.refreshToken || request.query.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token is required');
     }
 
     try {
-      await this.jwtService.verify(token, {
+      const decoded = this.jwtService.verify(refreshToken, {
         secret: this.configService.get<string>('jwt.refreshSecretKey'),
       });
-    } catch {
+      request.user = decoded;
+      console.log(request.user);
+    } catch (error) {
       throw new ForbiddenException('Refresh token expired');
     }
 
     return true;
   }
 }
+
 export default JwtRefreshTokenGuard;

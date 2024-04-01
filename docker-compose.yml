@@ -22,6 +22,7 @@ services:
 
     volumes:
       - ./src:/usr/app/src
+      - ./logs:/usr/app/logs
     networks:
       - homelibrary
   db:

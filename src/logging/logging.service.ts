@@ -154,9 +154,7 @@ export class LoggingService extends Logger {
     this.log(logMessage);
   }
 
-  logError(result: { statusCode: number; message: string; path: string }) {
-    const { statusCode = 0, message = '', path = '' } = result;
-    const logMessage = `HTTP Exception: ${statusCode} - ${message} - Path: ${path}`;
-    this.error(logMessage);
+  logError(message: string) {
+    this.error(message);
   }
 }

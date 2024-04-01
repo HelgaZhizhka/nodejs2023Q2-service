@@ -28,7 +28,7 @@ async function bootstrap() {
       forbidUnknownValues: true,
     }),
   );
-  
+
   app.useGlobalFilters(
     new PrismaExceptionFilter(),
     new HttpExceptionFilter(logger),
@@ -38,15 +38,13 @@ async function bootstrap() {
     logger.error(`Uncaught Exception: ${err.message}`, origin);
   });
 
-  process.on('unhandledRejection', (reason, promise) => {
+  process.on('unhandledRejection', (reason) => {
     logger.warn(`Unhandled Rejection: ${reason}`);
   });
 
   // test for trigger the unhandledRejection handler error with logger service
-  // new Promise((resolve, reject) => {
-  //   throw new Error('This will be unhandled');
-  // });
-  
+  // throw new Error('This will be unhandledRejection');
+
   await app.listen(port);
   logger.log(`~ Application is running on port: ${port}`, 'Bootstrap');
 }

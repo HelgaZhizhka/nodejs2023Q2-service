@@ -17,5 +17,5 @@ export const enum LogLevel {
   WARN,
   LOG,
   DEBUG,
-  VERBOSE,  
+  VERBOSE,
 }

@@ -5,8 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import config from './config/configuration';
 import { LoggingMiddleware } from './logging/middlewares/logging.middleware';
 import { LoggingModule } from './logging/logging.module';
-import { LoggingService } from './logging/logging.service';
-import { JwtAccessTokenGuard } from './auth/guards';
+import { JwtAuthGuard } from './auth/guards';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ArtistModule } from './artist/artist.module';
@@ -35,8 +34,8 @@ import { AppService } from './app.service';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: JwtAccessTokenGuard,
-    }
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule implements NestModule {

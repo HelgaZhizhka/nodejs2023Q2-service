@@ -1,14 +1,15 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 import { UserResponseDto } from '../user/dto/user-response.dto';
 import { CreateUserDto } from '../user/dto/create-user.dto';
-import { User, UserTokens } from '../user/interfaces/user.interface';
 import { UserService } from '../user/user.service';
+import { User } from '../user/interfaces/user.interface';
 import { PrismaService } from '../prisma/prisma.service';
-import { RefreshResponse } from './interfaces/refresh.interface';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { UserTokens } from './interfaces/userTokens.interface';
+import { LoginResponse } from './interfaces/loginResponse.interface';
+import { RefreshRequest } from './interfaces/refreshRequest.interface';
 
 @Injectable()
 export class AuthService {
@@ -19,10 +20,10 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async login(user: User): Promise<UserTokens> {
+  async login(user: User): Promise<LoginResponse> {
     const { id: userId, login } = user;
     const tokens = await this.signTokens(userId, login);
-    await this.saveUserTokens(userId, tokens.refreshToken);
+    await this.updateRefreshToken(userId, tokens.refreshToken);
     return { userId, login, ...tokens };
   }
 
@@ -49,29 +50,20 @@ export class AuthService {
     return currentUser;
   }
 
-  async refresh({ refreshToken }: UpdateAuthDto): Promise<RefreshResponse> {
-    const { userId } = await this.prisma.userTokens.findUnique({
-      where: {
-        refreshToken,
-      },
-    });
+  async refresh(user: RefreshRequest): Promise<UserTokens> {
+    const { userId, login } = user;
+    const tokens = await this.signTokens(userId, login);
 
-    if (!userId) {
-      throw new ForbiddenException('Invalid refresh token');
+    try {
+      await this.updateRefreshToken(userId, tokens.refreshToken);
+    } catch (error) {
+      console.error('Error updating refresh token:', error);
     }
 
-    await this.removeUserTokens(userId);
-    const user = await this.userService.findOne(userId);
-    const { login } = user;
-    const tokens = await this.signTokens(userId, login);
-    await this.saveUserTokens(userId, refreshToken);
     return tokens;
   }
 
-  private async signTokens(
-    userId: string,
-    login: string,
-  ): Promise<RefreshResponse> {
+  private async signTokens(userId: string, login: string): Promise<UserTokens> {
     const payload = { userId, login };
 
     const accessToken = await this.jwtService.signAsync(payload, {
@@ -90,37 +82,11 @@ export class AuthService {
     };
   }
 
-  private async saveUserTokens(userId: string, refreshToken: string) {
-    const token = await this.prisma.userTokens.findUnique({
-      where: {
-        userId,
-      },
-    });
-
-    if (token) {
-      await this.prisma.userTokens.update({
-        where: {
-          userId,
-        },
-        data: {
-          refreshToken,
-        },
-      });
-    } else {
-      await this.prisma.userTokens.create({
-        data: {
-          userId,
-          refreshToken,
-        },
-      });
-    }
-  }
-
-  private async removeUserTokens(userId: string) {
-    await this.prisma.userTokens.delete({
-      where: {
-        userId,
-      },
+  private async updateRefreshToken(userId: string, refreshToken: string) {
+    await this.prisma.userTokens.upsert({
+      where: { userId },
+      update: { refreshToken },
+      create: { userId, refreshToken },
     });
   }
 }
