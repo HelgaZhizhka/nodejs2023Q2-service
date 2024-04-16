@@ -1,58 +1,68 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
-import { Entities } from '../utils/enums';
-import { inMemoryDbService } from '../inMemoryDb/inMemoryDb.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './interface/user.interface';
-import { UserEntity } from './entities/user.entity';
+import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UserService {
-  constructor(private db: inMemoryDbService) {}
+  constructor(private prisma: PrismaService) {}
 
-  create(createUserDto: CreateUserDto): UserEntity {
-    const { login } = createUserDto;
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    const { login, password } = createUserDto;
+    const user = await this.prisma.user.create({
+      data: { login, password, version: 1 },
+    });
+    return new UserResponseDto(user);
+  }
 
-    const isUserExists = this.db.users.some((user) => user.login === login);
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.prisma.user.findMany();
+    return users.map((user) => new UserResponseDto(user));
+  }
 
-    if (isUserExists) {
-      throw new HttpException('User already exists', HttpStatus.CONFLICT);
+  async findOne(id: string): Promise<UserResponseDto> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      throw new HttpException(
+        `User with ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
     }
 
-    const newUser: User = new UserEntity({
-      ...createUserDto,
-      version: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    this.db.addEntity(Entities.USERS, newUser);
-    return newUser;
+    return new UserResponseDto(user);
   }
 
-  findAll() {
-    return this.db.getAllEntities(Entities.USERS);
-  }
-
-  findOne(id: string) {
-    return this.db.findEntityById(id, Entities.USERS) as User;
-  }
-
-  update(id: string, updateUserDto: UpdateUserDto): UserEntity {
-    const user = this.findOne(id);
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
     const { oldPassword, newPassword } = updateUserDto;
+    const user = await this.prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
 
     if (user.password !== oldPassword) {
       throw new HttpException('Invalid password', HttpStatus.FORBIDDEN);
     }
 
-    user.password = newPassword;
-    user.updatedAt = Date.now();
-    user.version++;
-    return user;
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        password: newPassword,
+        version: { increment: 1 },
+      },
+    });
+
+    return new UserResponseDto(updatedUser);
   }
 
-  remove(id: string) {
-    this.db.removeEntity(id, Entities.USERS);
+  async remove(id: string): Promise<void> {
+    await this.findOne(id);
+    await this.prisma.user.delete({ where: { id } });
   }
 }

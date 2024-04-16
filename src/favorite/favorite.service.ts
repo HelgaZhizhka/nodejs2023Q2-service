@@ -1,50 +1,111 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
-import { inMemoryDbService } from '../inMemoryDb/inMemoryDb.service';
-import { Entities } from '../utils/enums';
-import { Favorite } from './interface/favorite.interface';
+import { PrismaService } from '../prisma/prisma.service';
+import { Entities, EntityToTable } from '../utils/enums';
 
-@Injectable({ scope: Scope.DEFAULT })
+@Injectable()
 export class FavoriteService {
-  constructor(private db: inMemoryDbService) {}
+  constructor(private prisma: PrismaService) {}
 
-  findAll(): Favorite {
-    const favorites = {
-      artists: [],
-      albums: [],
-      tracks: [],
-    };
-
-    this.db.favorites.artists.forEach((id) => {
-      const artist = this.db.artists.find((artist) => artist.id === id);
-      if (artist) {
-        favorites.artists.push(artist);
-      }
+  private createFavorites() {
+    return this.prisma.favorite.create({
+      data: {
+        artists: [],
+        albums: [],
+        tracks: [],
+      },
     });
-
-    this.db.favorites.albums.forEach((id) => {
-      const album = this.db.albums.find((album) => album.id === id);
-      if (album) {
-        favorites.albums.push(album);
-      }
-    });
-
-    this.db.favorites.tracks.forEach((id) => {
-      const track = this.db.tracks.find((track) => track.id === id);
-      if (track) {
-        favorites.tracks.push(track);
-      }
-    });
-
-    return favorites;
   }
 
-  private addToFavorites(id: string, entity: Entities) {
-    this.db.addToFavorites(id, entity);
+  async findAll() {
+    let favorites = await this.prisma.favorite.findFirst();
+
+    if (!favorites) {
+      favorites = await this.createFavorites();
+    }
+
+    const [tracks, albums, artists] = await Promise.all([
+      this.findAllEntities(favorites.tracks, 'track'),
+      this.findAllEntities(favorites.albums, 'album'),
+      this.findAllEntities(favorites.artists, 'artist'),
+    ]);
+
+    return { tracks, albums, artists };
   }
 
-  private removeFromFavorites(id: string, entity: Entities) {
-    this.db.removeFromFavorites(id, entity);
+  private async findAllEntities(entity: string[], entityName: string) {
+    return (
+      await Promise.all(
+        entity.map((id) =>
+          this.prisma[entityName].findUnique({ where: { id } }),
+        ),
+      )
+    ).filter((e) => e !== null);
+  }
+
+  private async checkEntity(entity: Entities, id: string) {
+    const entityToFavorite = await this.prisma[
+      EntityToTable[entity]
+    ].findUnique({
+      where: { id },
+    });
+
+    if (!entityToFavorite) {
+      throw new HttpException(
+        `${entity} with id ${id} not found`,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  private async addToFavorites(id: string, entity: Entities) {
+    await this.checkEntity(entity, id);
+    let favorites = await this.prisma.favorite.findFirst();
+
+    if (!favorites) {
+      favorites = await this.createFavorites();
+    }
+
+    if (!favorites[entity].includes(id)) {
+      await this.prisma.favorite.update({
+        where: { favoriteId: favorites.favoriteId },
+        data: {
+          [entity]: {
+            set: [...favorites[entity], id],
+          },
+        },
+      });
+    } else {
+      throw new HttpException(
+        `${entity} with id ${id} already exists in favorites`,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  private async removeFromFavorites(id: string, entity: Entities) {
+    await this.checkEntity(entity, id);
+    let favorites = await this.prisma.favorite.findFirst();
+
+    if (!favorites) {
+      favorites = await this.createFavorites();
+    }
+
+    if (favorites[entity].includes(id)) {
+      await this.prisma.favorite.update({
+        where: { favoriteId: favorites.favoriteId },
+        data: {
+          [entity]: {
+            set: favorites[entity].filter((entityId) => entityId !== id),
+          },
+        },
+      });
+    } else {
+      throw new HttpException(
+        `${entity} with id ${id} does not exist in favorites`,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
   }
 
   addArtist(id: string) {

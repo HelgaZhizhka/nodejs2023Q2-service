@@ -4,3 +4,10 @@ export const enum Entities {
   ARTISTS = 'artists',
   ALBUMS = 'albums',
 }
+
+export const EntityToTable = {
+  [Entities.USERS]: 'user',
+  [Entities.TRACKS]: 'track',
+  [Entities.ARTISTS]: 'artist',
+  [Entities.ALBUMS]: 'album',
+};

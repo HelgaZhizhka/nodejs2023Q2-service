@@ -1,79 +1,63 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Track } from '@prisma/client';
 
-import { inMemoryDbService } from '../inMemoryDb/inMemoryDb.service';
-import { Entities } from '../utils/enums';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
-import { TrackEntity } from './entities/track.entity';
-import { Track } from './interface/track.interface';
 
 @Injectable()
 export class TrackService {
-  constructor(private db: inMemoryDbService) {}
+  constructor(private prisma: PrismaService) {}
 
-  create(createTrackDto: CreateTrackDto) {
-    const { albumId, artistId } = createTrackDto;
-
-    if (artistId) {
-      this.db.findEntityById(artistId, Entities.ARTISTS);
-    }
-
-    if (albumId) {
-      this.db.findEntityById(albumId, Entities.ALBUMS);
-    }
-
-    const newTrack: Track = new TrackEntity({
-      ...createTrackDto,
-    });
-    this.db.addEntity(Entities.TRACKS, newTrack);
-    return newTrack;
+  async create(createTrackDto: CreateTrackDto): Promise<Track> {
+    return await this.prisma.track.create({ data: createTrackDto });
   }
 
-  findAll() {
-    return this.db.getAllEntities(Entities.TRACKS);
+  async findAll(): Promise<Track[]> {
+    return await this.prisma.track.findMany();
   }
 
-  findOne(id: string) {
-    return this.db.findEntityById(id, Entities.TRACKS) as Track;
-  }
+  async findOne(id: string): Promise<Track> {
+    const track = await this.prisma.track.findUnique({ where: { id } });
 
-  update(id: string, updateTrackDto: UpdateTrackDto) {
-    const track = this.findOne(id);
-    const { albumId, artistId, name, duration } = updateTrackDto;
-
-    if (artistId) {
-      this.db.findEntityById(artistId, Entities.ARTISTS);
+    if (!track) {
+      throw new HttpException(
+        `Track with id ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
     }
 
-    if (albumId) {
-      this.db.findEntityById(albumId, Entities.ALBUMS);
-    }
-
-    track.albumId = albumId;
-    track.artistId = artistId;
-    track.name = name;
-    track.duration = duration;
     return track;
   }
 
-  remove(id: string) {
-    this.db.removeFromFavorites(id, Entities.TRACKS);
-    this.db.removeEntity(id, Entities.TRACKS);
+  async update(id: string, updateTrackDto: UpdateTrackDto): Promise<Track> {
+    await this.findOne(id);
+
+    return await this.prisma.track.update({
+      where: { id },
+      data: updateTrackDto,
+    });
   }
 
-  onAlbumRemove(albumId: string) {
-    for (const track of this.db.tracks) {
-      if (track.albumId === albumId) {
-        track.albumId = null;
-      }
-    }
-  }
+  async remove(trackId: string): Promise<void> {
+    await this.findOne(trackId);
 
-  onArtistRemove(artistId: string) {
-    for (const track of this.db.tracks) {
-      if (track.artistId === artistId) {
-        track.artistId = null;
-      }
+    const favoritesContainingTrack = await this.prisma.favorite.findMany({
+      where: {
+        tracks: {
+          has: trackId,
+        },
+      },
+    });
+
+    for (const favorite of favoritesContainingTrack) {
+      const updatedTracks = favorite.tracks.filter((id) => id !== trackId);
+      await this.prisma.favorite.update({
+        where: { favoriteId: favorite.favoriteId },
+        data: { tracks: updatedTracks },
+      });
     }
+
+    await this.prisma.track.delete({ where: { id: trackId } });
   }
 }

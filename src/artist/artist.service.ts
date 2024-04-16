@@ -1,50 +1,67 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Artist } from '@prisma/client';
 
-import { inMemoryDbService } from '../inMemoryDb/inMemoryDb.service';
-import { Entities } from '../utils/enums';
-import { AlbumService } from '../album/album.service';
-import { TrackService } from '../track/track.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
-import { ArtistEntity } from './entities/artist.entity';
-import { Artist } from './interface/artist.interface';
 
 @Injectable()
 export class ArtistService {
-  constructor(
-    private db: inMemoryDbService,
-    private trackService: TrackService,
-    private albumService: AlbumService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  create(createArtistDto: CreateArtistDto): ArtistEntity {
-    const newArtist: Artist = new ArtistEntity({
-      ...createArtistDto,
+  async create(createArtistDto: CreateArtistDto): Promise<Artist> {
+    return await this.prisma.artist.create({
+      data: createArtistDto,
     });
-    this.db.addEntity(Entities.ARTISTS, newArtist);
-    return newArtist;
   }
 
-  findAll() {
-    return this.db.getAllEntities(Entities.ARTISTS);
+  async findAll(): Promise<Artist[]> {
+    return await this.prisma.artist.findMany();
   }
 
-  findOne(id: string): ArtistEntity {
-    return this.db.findEntityById(id, Entities.ARTISTS) as Artist;
-  }
+  async findOne(id: string): Promise<Artist> {
+    const artist = await this.prisma.artist.findUnique({
+      where: { id },
+    });
 
-  update(id: string, updateArtistDto: UpdateArtistDto): ArtistEntity {
-    const artist = this.findOne(id);
-    const { name, grammy } = updateArtistDto;
-    artist.name = name;
-    artist.grammy = grammy;
+    if (!artist) {
+      throw new HttpException(
+        `Artist with id ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
     return artist;
   }
 
-  remove(id: string) {
-    this.albumService.onArtistRemove(id);
-    this.trackService.onArtistRemove(id);
-    this.db.removeFromFavorites(id, Entities.ARTISTS);
-    this.db.removeEntity(id, Entities.ARTISTS);
+  async update(id: string, updateArtistDto: UpdateArtistDto): Promise<Artist> {
+    await this.findOne(id);
+
+    return await this.prisma.artist.update({
+      where: { id },
+      data: updateArtistDto,
+    });
+  }
+
+  async remove(artistId: string): Promise<void> {
+    await this.findOne(artistId);
+
+    const favoritesContainingArtist = await this.prisma.favorite.findMany({
+      where: {
+        artists: {
+          has: artistId,
+        },
+      },
+    });
+
+    for (const favorite of favoritesContainingArtist) {
+      const updatedArtists = favorite.artists.filter((id) => id !== artistId);
+      await this.prisma.favorite.update({
+        where: { favoriteId: favorite.favoriteId },
+        data: { artists: updatedArtists },
+      });
+    }
+
+    await this.prisma.artist.delete({ where: { id: artistId } });
   }
 }
