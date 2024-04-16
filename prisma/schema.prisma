@@ -21,6 +21,7 @@ model User {
   version   Int        @default(autoincrement())
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  userTokens UserTokens?
 }
 
 model Artist {
@@ -37,7 +38,7 @@ model Album {
   year     Int
   artistId String?
   artist   Artist?  @relation("ArtistToAlbum", fields: [artistId], references: [id], onDelete: SetNull)
-  tracks   Track[] @relation("AlbumToTrack")
+  tracks   Track[]  @relation("AlbumToTrack")
 }
 
 model Track {
@@ -55,4 +56,13 @@ model Favorite {
   artists     String[]
   albums      String[]
   tracks      String[]
+}
+
+model UserTokens {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  refreshToken String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

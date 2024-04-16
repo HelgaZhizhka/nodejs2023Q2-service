@@ -3,7 +3,7 @@ services:
   api:
     container_name: api
     restart: unless-stopped
-    image: helgazhyzhka/homelibrary-api:latest
+    image: helgazhyzhka/homelibrary-api:1.0.0-alpha.1
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,14 +14,20 @@ services:
     environment:
       - PORT=${APP_PORT}
       - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_SECRET_REFRESH_KEY=${JWT_SECRET_REFRESH_KEY}
+      - TOKEN_EXPIRE_TIME=${TOKEN_EXPIRE_TIME}
+      - TOKEN_REFRESH_EXPIRE_TIME=${TOKEN_REFRESH_EXPIRE_TIME}
+
     volumes:
       - ./src:/usr/app/src
+      - ./logs:/usr/app/logs
     networks:
       - homelibrary
   db:
     container_name: db
     restart: unless-stopped
-    image: helgazhyzhka/homelibrary-db:latest
+    image: helgazhyzhka/homelibrary-db:1.0.0-alpha.1
     build:
       context: ./db
       dockerfile: Dockerfile.db

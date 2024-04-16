@@ -12,10 +12,11 @@ clone the repository
 git clone https://github.com/HelgaZhizhka/nodejs2024Q1-service.git
 cd nodejs2024Q1-service
 ```
-Checkout on branch sprint_2
+
+Checkout on branch sprint_3
 
 ```
-git checkout sprint_2
+git checkout sprint_3
 ```
 
 ## Installing NPM modules
@@ -38,6 +39,13 @@ npm run docker:up
 
 This command will create and start containers for the API and database using Docker Compose.
 
+After running the command, the API will be available at `http://localhost:4000`.
+
+- **4000** - default port for API service
+- **5432** - default port for database service
+
+Docker container is build on platform: linux/amd64
+
 ## Stopping Docker Containers
 
 To stop and remove containers:
@@ -45,6 +53,34 @@ To stop and remove containers:
 ```
 npm run docker:down
 ```
+
+## Running application without Docker
+
+To start the application without Docker you need to have PostgreSQL installed on your machine or use the Docker container for the database.
+
+```
+docker-compose up -d db
+```
+
+- change POSTGRES_HOST=db to POSTGRES_HOST=localhost in .env file
+
+- start prisma migrations local
+
+```
+npx prisma migrate deploy
+```
+
+Run the application:
+
+```
+npm run start:dev
+```
+
+After running the command, the API will be available at `http://localhost:4000`.
+
+## Logging application
+
+All log files are stored in the `logs` directory.
 
 ## Testing
 
@@ -56,10 +92,28 @@ To run all tests without authorization. Run tests with starting the database and
 npm run test
 ```
 
-or
+To run all tests with authorization. Run tests with starting the database and application:
 
 ```
-npm run docker:test
+npm run test:auth
+```
+
+To run only specific test suite with authorization\_
+
+```
+npm run test:auth -- <path to suite>
+```
+
+To run refresh token test suite:
+
+```
+npm run test:refresh
+```
+
+For testing HTTPExceptions filter use get request on the following endpoint:
+
+```
+http://localhost:4000/test-error
 ```
 
 ## Scanning for Vulnerabilities
@@ -82,6 +136,6 @@ npm run format
 
 ## Docker Hub
 
-[Docker Hub Repository Application image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-api/latest/images/sha256-57587e59a2044b44f27df40e7c115cf3ea0fd2c9ab476a1f04e55b5064b44011?context=repo)
+[Docker Hub Repository Application image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-api/1.0.0-alpha.1/images/sha256-fafe35bed35b05b6db3f18c0e6d394cb7a4d33f39123c058c320ff63896a7e68?context=repo)
 
-[Docker Hub Repository Database image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-db/latest/images/sha256-9c524987d480f9c11d5bea2bec1d947dfa471045ed3d60ca053c0ed2adac46d2?context=repo)
+[Docker Hub Repository Database image](https://hub.docker.com/layers/helgazhyzhka/homelibrary-db/1.0.0-alpha.1/images/sha256-1fa48b93d7848e8d8e641fe1a86fdc66f1efd0ca528abbde7fdd663dc6b89874?context=repo)

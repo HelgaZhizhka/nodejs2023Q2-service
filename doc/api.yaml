@@ -104,8 +104,141 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Track'
+    Login:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        login:
+          type: string
+          example: 'TestUser'
+        accessToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3MTY0N2RiMC1lYWI3LTExZWUtYWU4NC1lZmI2YmE2YTMxODMiLCJsb2dpbiI6ImFkbWluIiwiaWF0IjoxNzExMzc5MzQ5LCJleHAiOjE3MTEzODI5NDl9.YbQlf718qdZ_6yFO-Nz0aRqDgkh2-0FsVkKd1zv_fNc'
+        refreshToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3MTY0N2RiMC1lYWI3LTExZWUtYWU4NC1lZmI2YmE2YTMxODMiLCJsb2dpbiI6ImFkbWluIiwiaWF0IjoxNzExMzc5MzQ5LCJleHAiOjE3MTE0NjU3NDl9.UT3nKF2VLa9J4IbSkrcGCYJ0mczeiYVsAbKUrkUSToU'
+    Tokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3MTY0N2RiMC1lYWI3LTExZWUtYWU4NC1lZmI2YmE2YTMxODMiLCJsb2dpbiI6ImFkbWluIiwiaWF0IjoxNzExMzc5MzQ5LCJleHAiOjE3MTEzODI5NDl9.YbQlf718qdZ_6yFO-Nz0aRqDgkh2-0FsVkKd1zv_fNc'
+        refreshToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3MTY0N2RiMC1lYWI3LTExZWUtYWU4NC1lZmI2YmE2YTMxODMiLCJsb2dpbiI6ImFkbWluIiwiaWF0IjoxNzExMzc5MzQ5LCJleHAiOjE3MTE0NjU3NDl9.UT3nKF2VLa9J4IbSkrcGCYJ0mczeiYVsAbKUrkUSToU'
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
 
 paths:
+  /auth/login:
+    post:
+      tags:
+        - Login
+      security: []
+      summary: Login
+      description: Login a user and returns a JWT-tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              title: example
+              properties:
+                login:
+                  type: string
+                  description: Username
+                password:
+                  type: string
+                  description: Password
+              required:
+                - user
+                - login
+      responses:
+        200:
+          description: Successful login.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                description: JWT Token
+        403:
+          description: Incorrect login or password
+  /auth/signup:
+    post:
+      tags:
+        - Signup
+      security: []
+      summary: Signup
+      description: Signup a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              title: example
+              properties:
+                login:
+                  type: string
+                  minLength: 3
+                  maxLength: 255
+                  description: Username
+                password:
+                  type: string
+                  format: password
+                  pattern: ^[a-zA-Z0-9]{3,30}
+                  description: Password
+              required:
+                - login
+                - password
+      responses:
+        204:
+          description: Successful signup
+        400:
+          description: Bad request
+        409:
+          description: Conflict. Login already exists
+  /auth/refresh:
+    post:
+      tags:
+        - Refresh
+      security: []
+      summary: Refresh
+      description: Refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              title: example
+              properties:
+                refreshToken:
+                  type: string
+              required:
+                - refreshToken
+      responses:
+        200:
+          description: Access token and Refresh token
+        401:
+          description: Bad request
+        403:
+          description: Authentication failed
   /user:
     get:
       tags:

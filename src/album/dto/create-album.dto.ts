@@ -1,6 +1,6 @@
 import { IsInt, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
-import { IsNullable } from '../../utils/isNullable.decorator';
+import { IsNullable } from '../../decorators/isNullable.decorator';
 
 export class CreateAlbumDto {
   @IsString()

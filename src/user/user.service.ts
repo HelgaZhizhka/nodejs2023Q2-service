@@ -1,4 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { compare, hash } from 'bcrypt';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -7,12 +9,15 @@ import { UserResponseDto } from './dto/user-response.dto';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
-    const { login, password } = createUserDto;
+  async create({ login, password }: CreateUserDto): Promise<UserResponseDto> {
+    const hashedPassword = await this.hashPassword(password);
     const user = await this.prisma.user.create({
-      data: { login, password, version: 1 },
+      data: { login, password: hashedPassword, version: 1 },
     });
     return new UserResponseDto(user);
   }
@@ -37,23 +42,24 @@ export class UserService {
 
   async update(
     id: string,
-    updateUserDto: UpdateUserDto,
+    { oldPassword, newPassword }: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    const { oldPassword, newPassword } = updateUserDto;
     const user = await this.prisma.user.findUnique({ where: { id } });
 
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
 
-    if (user.password !== oldPassword) {
+    const isMatch = await this.comparePassword(oldPassword, user.password);
+    if (!isMatch) {
       throw new HttpException('Invalid password', HttpStatus.FORBIDDEN);
     }
 
+    const hashedNewPassword = await this.hashPassword(newPassword);
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
-        password: newPassword,
+        password: hashedNewPassword,
         version: { increment: 1 },
       },
     });
@@ -64,5 +70,15 @@ export class UserService {
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.prisma.user.delete({ where: { id } });
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    const cryptConfig = this.configService.get('crypt');
+    const salt = cryptConfig.salt;
+    return await hash(password, salt);
+  }
+
+  async comparePassword(password: string, hash: string): Promise<boolean> {
+    return await compare(password, hash);
   }
 }
